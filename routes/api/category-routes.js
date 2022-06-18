@@ -56,12 +56,17 @@ router.put('/:id', async (req, res) => {
   // update a category by its `id` value
   try{
     if (req.body && req.body.category_name){
-      var category = await Category.update(req.body, {
+      var updated = await Category.update(req.body, {
         where: {
           id: req.params.id
         }
       });
-      res.status(200).json(category);
+      if (updated.length !== 1)
+        res.status(500).json('Internal error');
+      else if(updated[0] === 1)
+        res.status(200).json(`Category with id ${req.params.id} has been updated`);
+      else
+        res.status(404).json('Category id not found');
     }
     else
       res.status(400).json('Missing category name');
