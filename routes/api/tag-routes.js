@@ -32,7 +32,7 @@ router.get('/:id', async (req, res) => {
   }
   catch(e){
     res.status(500).json(e);
- }
+  }
 });
 
 router.post('/', async (req, res) => {
