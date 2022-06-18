@@ -70,19 +70,22 @@ router.post('/', (req, res) => {
 });
 
 // update product
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   // update product data
   try{
-    Product.update(req.body, {
+    var updated = await Product.update(req.body, {
       where: {
         id: req.params.id,
       },
-    })
-    .then((product) => {
+    });
+    console.log(updated);
+    if(updated.length !== 1)
+      res.status(500).json('Internal error');
+    else if(updated[0] == 0)
+      res.status(404).json('product id not found');
+    else{
       // find all associated tags from ProductTag
-      return ProductTag.findAll({ where: { product_id: req.params.id } });
-    })
-    .then((productTags) => {
+      var productTags = await ProductTag.findAll({ where: { product_id: req.params.id } });
       if(req.body.tagIds){
         // get list of current tag_ids
         const productTagIds = productTags.map(({ tag_id }) => tag_id);
@@ -103,19 +106,13 @@ router.put('/:id', (req, res) => {
         .map(({ id }) => id);
   
         // run both actions
-        return Promise.all([
+        updated = await Promise.all([
           ProductTag.destroy({ where: { id: productTagsToRemove } }),
           ProductTag.bulkCreate(newProductTags),
         ]);
       }
-      else
-        return Promise.resolve(req.params.id);
-    })
-    .then((updatedProductTags) => res.status(201).json(req.params.id))
-    .catch((err) => {
-      console.log(err);
-      res.status(400).json(err);
-    });
+      res.status(201).json(req.params.id);
+    }
   }
   catch(e){
     res.status(500).json(e);
